@@ -3,6 +3,7 @@ import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
 import config from "./config";
+import markdownLinkExtractor from "markdown-link-extractor";
 
 export interface Item {
   type: string;
@@ -87,7 +88,34 @@ const processDir = async (item: Item) => {
 
 // TODO:
 const processFile = async (item: Item) => {
-  console.log(item);
+  const links = markdownLinkExtractor(item.content);
+  links.forEach((link: any) => console.log(link));
+
+  const matches = item.content.match(linksRegex);
+  console.log("🚀 ~ matches:", matches);
+  /*
+  if (matches) {
+    for (const match of matches) {
+      console.log("🚀 ~ match:", match);
+      const link = match.slice(2, -2);
+      const linkParts = link.split("|");
+      const linkText = linkParts[1] || linkParts[0];
+      const linkedNote: any = Object.values(allNotes).find(
+        (note: any) => note.vaultTitle === linkParts[0]
+      );
+      // if there is a linked note, replace with markdown link
+      if (linkedNote) {
+        item.content = item.content.replace(
+          match,
+          `[${linkText}](/${linkedNote.slug}/)`
+        );
+      } else {
+        // if there is no linked note, remove wikilink
+        item.content = item.content.replace(match, linkText);
+      }
+    }
+  }
+  */
 };
 
 const processNote = async (note: any) => {
