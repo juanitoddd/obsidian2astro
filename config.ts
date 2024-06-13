@@ -1,8 +1,8 @@
 export default {
-  vaultImagesPath: "/mnt/c/Users/juan/Documents/Obsidian/main",
-  vaultNotesPath: "/mnt/c/Users/juan/Documents/Obsidian/main",
-  astroImagesPath: "../theme/public",
-  astroNotesPath: "../theme/src/pages",
+  vaultImagesPath: "/home/juan/obsidian/vault",
+  vaultNotesPath: "/home/juan/obsidian/vault",
+  astroImagesPath: "/home/juan/obsidian/theme",
+  astroNotesPath: "/home/juan/obsidian/theme",
   replaceFileSystemImageSrc: true,
-  vaultPath: "/mnt/c/Users/juan/Documents/Obsidian/main", // required if replaceFileSystemImageSrc true
+  vaultPath: "/home/juan/obsidian/main/main", // required if replaceFileSystemImageSrc true
 };
