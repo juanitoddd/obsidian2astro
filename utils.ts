@@ -6,10 +6,12 @@ import config from "./config";
 import markdownLinkExtractor from "markdown-link-extractor";
 
 export interface Item {
+  title: string;
+  slug: string;
   type: string;
   path: string;
   meta?: any;
-  content?: any;
+  content?: any;  
 }
 
 const linksRegex = /\[\[(.+?)\]\]/g;
@@ -32,7 +34,7 @@ const mapDirectory = async (
       const stats = await fsp.stat(fullPath);
       if (stats.isDirectory()) {
         // If it's a directory, recursively map it
-        acc.push({ path: localPath, type: "dir" });
+        acc.push({ title:item, slug: key, path: localPath, type: "dir" });
         result[key] = await mapDirectory(fullPath, localPath, acc);
       } else {
         const ext = path.extname(fullPath);
@@ -40,7 +42,7 @@ const mapDirectory = async (
           // If it's a file, add it to the result
           const { content, meta } = await getFileData(fullPath);
           result[key] = meta;
-          acc.push({ path: localPath, type: "file", meta, content });
+          acc.push({ title:item, slug: key, path: localPath, type: "file", meta, content });
         }
         // TODO: Images
         if ([".png", ".jpg", ".jpeg", ".gif"].includes(ext)) {
@@ -69,86 +71,27 @@ const getFileData = async (fullPath: string) => {
   return { content, meta };
 };
 
-const writeNote = async (note: any) => {
-  if (!note) {
-    console.log(note);
-  }
-  console.log(`Writing ${note.fileName}...`);
-  const processedNote = await processNote(note);
-  return fsp.writeFile(
-    config.astroNotesPath + "/" + processedNote.slug + ".md",
-    processedNote.content
-  );
-};
-
 const processDir = async (item: Item) => {
   const targetPath = path.join(config.astroNotesPath, item.path);
-  if (!fs.existsSync(targetPath)) fsp.mkdir(targetPath);
+  if (!fs.existsSync(targetPath)) await fsp.mkdir(targetPath);
 };
 
-// TODO:
 const processFile = async (item: Item) => {
-  const links = markdownLinkExtractor(item.content);
-  links.forEach((link: any) => console.log(link));
+  // const links = markdownLinkExtractor(item.content);
+  // links.forEach((link: any) => console.log(link));
 
-  const matches = item.content.match(linksRegex);
-  console.log("🚀 ~ matches:", matches);
-  /*
-  if (matches) {
-    for (const match of matches) {
-      console.log("🚀 ~ match:", match);
-      const link = match.slice(2, -2);
-      const linkParts = link.split("|");
-      const linkText = linkParts[1] || linkParts[0];
-      const linkedNote: any = Object.values(allNotes).find(
-        (note: any) => note.vaultTitle === linkParts[0]
-      );
-      // if there is a linked note, replace with markdown link
-      if (linkedNote) {
-        item.content = item.content.replace(
-          match,
-          `[${linkText}](/${linkedNote.slug}/)`
-        );
-      } else {
-        // if there is no linked note, remove wikilink
-        item.content = item.content.replace(match, linkText);
-      }
-    }
-  }
-  */
-};
+  // TODO: Add astro markdown
+  const content = `---
+layout: '@/templates/BasePost.astro'
+title: ${item.meta?.title || ''}
+description: ${item.meta?.description || ''}
+pubDate: ${item.meta?.reviewed || ''}
+---
+${item.content}
+  `
 
-const processNote = async (note: any) => {
-  // check for wikilinks
-  const matches = note.content.match(linksRegex);
-  if (matches) {
-    for (const match of matches) {
-      const link = match.slice(2, -2);
-      const linkParts = link.split("|");
-      const linkText = linkParts[1] || linkParts[0];
-      const linkedNote: any = Object.values(allNotes).find(
-        (note: any) => note.vaultTitle === linkParts[0]
-      );
-      // if there is a linked note, replace with markdown link
-      if (linkedNote) {
-        note.content = note.content.replace(
-          match,
-          `[${linkText}](/${linkedNote.slug}/)`
-        );
-      } else {
-        // if there is no linked note, remove wikilink
-        note.content = note.content.replace(match, linkText);
-      }
-    }
-  }
 
-  // replace images with file:// src with relative src
-  if (config.replaceFileSystemImageSrc) {
-    const fileRegex = new RegExp(`file://${config.vaultPath}`, "g");
-    note.content = note.content.replace(fileRegex, "");
-  }
-
-  return note;
+  await fsp.writeFile(`${config.astroNotesPath}/${item.path}`, content);  
 };
 
 const slugify = (str: string): string => {
